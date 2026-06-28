@@ -53,26 +53,27 @@ const VideoUploader = ({ channelId, channelName }: any) => {
       toast.error("Please provide file and title");
       return;
     }
+
     const formdata = new FormData();
     formdata.append("file", videoFile);
     formdata.append("videotitle", videoTitle);
     formdata.append("videochanel", channelName);
     formdata.append("uploader", channelId);
-    console.log(formdata)
+
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      const res = await axiosInstance.post("/video/upload", formdata, {
-         headers: {
-    "Content-Type": "multipart/form-data", // ✅ MUST for FormData
-  },
-        onUploadProgress: (progresEvent: any) => {
-          const progress = Math.round(
-            (progresEvent.loaded * 100) / progresEvent.total
-          );
+      await axiosInstance.post("/video/upload", formdata, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent: any) => {
+          const total = progressEvent.total || videoFile.size;
+          const progress = Math.round((progressEvent.loaded * 100) / total);
           setUploadProgress(progress);
         },
       });
+
       toast.success("Upload successfully");
       resetForm();
     } catch (error) {

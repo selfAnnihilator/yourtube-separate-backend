@@ -1,20 +1,15 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCyxbdclt2ocA5zgE-MDy1ndYIFqVMAr30",
-  authDomain: "yourtube-8cda9.firebaseapp.com",
-  projectId: "yourtube-8cda9",
-  storageBucket: "yourtube-8cda9.firebasestorage.app",
-  messagingSenderId: "921641878423",
-  appId: "1:921641878423:web:0d65801eebaf2b25f03ad2",
+  apiKey: "AIzaSyCypA1gN9qbFsG6XyMe08l7S7tGRLd_5Ag",
+  authDomain: "yourtube-20056.firebaseapp.com",
+  projectId: "yourtube-20056",
+  storageBucket: "yourtube-20056.firebasestorage.app",
+  messagingSenderId: "758701310553",
+  appId: "1:758701310553:web:5192effd5629b23d336748",
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
