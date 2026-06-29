@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, X, ThumbsUp, Play } from "lucide-react";
+import { MoreVertical, X, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,11 +40,11 @@ export default function LikedVideosContent() {
     }
   };
 
-  const handleUnlikeVideo = async (videoId: string, likedVideoId: string) => {
+  const handleUnlikeVideo = async (likedVideoId: string) => {
     if (!user) return;
 
     try {
-      console.log("Unliking video:", videoId, "for user:", user.id);
+      await axiosInstance.delete(`/like/${likedVideoId}`);
       setLikedVideos(likedVideos.filter((item) => item._id !== likedVideoId));
     } catch (error) {
       console.error("Error unliking video:", error);
@@ -77,15 +76,10 @@ export default function LikedVideosContent() {
       </div>
     );
   }
-  const videos = "/video/vdo.mp4";
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">{likedVideos.length} videos</p>
-        <Button className="flex items-center gap-2">
-          <Play className="w-4 h-4" />
-          Play all
-        </Button>
       </div>
 
       <div className="space-y-4">
@@ -130,7 +124,7 @@ export default function LikedVideosContent() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onClick={() => handleUnlikeVideo(item.videoid._id, item._id)}
+                  onClick={() => handleUnlikeVideo(item._id)}
                 >
                   <X className="w-4 h-4 mr-2" />
                   Remove from liked videos

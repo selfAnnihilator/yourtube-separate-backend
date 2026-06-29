@@ -13,5 +13,9 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
-      - key: UPLOAD_DIR
-        value: /opt/render/project/src/uploads
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

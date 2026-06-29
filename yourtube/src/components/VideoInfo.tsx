@@ -12,6 +12,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
+import { getMediaUrl } from "@/lib/media";
+import { toast } from "sonner";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setlikes] = useState(video.Like || 0);
@@ -21,6 +23,7 @@ const VideoInfo = ({ video }: any) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { user } = useUser();
   const [isWatchLater, setIsWatchLater] = useState(false);
+  const mediaUrl = getMediaUrl(video?.filepath);
 
   // const user: any = {
   //   id: "1",
@@ -43,38 +46,54 @@ const VideoInfo = ({ video }: any) => {
             userId: user?._id,
           });
         } catch (error) {
-          return console.log(error);
+          console.error("Error recording watch history:", error);
         }
       } else {
         return await axiosInstance.post(`/history/views/${video?._id}`);
       }
     };
     handleviews();
-  }, [user]);
+  }, [user, video?._id]);
+
+  useEffect(() => {
+    const loadReaction = async () => {
+      if (!user || !video?._id) return;
+
+      try {
+        const res = await axiosInstance.get(
+          `/video/reaction/${video._id}/${user._id}`
+        );
+        setIsLiked(Boolean(res.data.liked));
+        setIsDisliked(Boolean(res.data.disliked));
+      } catch (error) {
+        console.error("Error loading reaction:", error);
+      }
+    };
+
+    loadReaction();
+  }, [user, video?._id]);
+
+  const applyReaction = (reaction: any) => {
+    setIsLiked(Boolean(reaction.liked));
+    setIsDisliked(Boolean(reaction.disliked));
+    setlikes(reaction.likeCount ?? 0);
+    setDislikes(reaction.dislikeCount ?? 0);
+  };
+
   const handleLike = async () => {
     if (!user) return;
     try {
       const res = await axiosInstance.post(`/like/${video._id}`, {
         userId: user?._id,
       });
-      if (res.data.liked) {
-        if (isLiked) {
-          setlikes((prev: any) => prev - 1);
-          setIsLiked(false);
-        } else {
-          setlikes((prev: any) => prev + 1);
-          setIsLiked(true);
-          if (isDisliked) {
-            setDislikes((prev: any) => prev - 1);
-            setIsDisliked(false);
-          }
-        }
-      }
+      applyReaction(res.data);
     } catch (error) {
-      console.log(error);
+      console.error("Error updating like:", error);
     }
   };
   const handleWatchLater = async () => {
+    if (!user) return;
+
     try {
       const res = await axiosInstance.post(`/watch/${video._id}`, {
         userId: user?._id,
@@ -85,30 +104,39 @@ const VideoInfo = ({ video }: any) => {
         setIsWatchLater(false);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error updating Watch Later:", error);
     }
   };
   const handleDislike = async () => {
     if (!user) return;
     try {
-      const res = await axiosInstance.post(`/like/${video._id}`, {
+      const res = await axiosInstance.post(`/dislike/${video._id}`, {
         userId: user?._id,
       });
-      if (!res.data.liked) {
-        if (isDisliked) {
-          setDislikes((prev: any) => prev - 1);
-          setIsDisliked(false);
-        } else {
-          setDislikes((prev: any) => prev + 1);
-          setIsDisliked(true);
-          if (isLiked) {
-            setlikes((prev: any) => prev - 1);
-            setIsLiked(false);
-          }
-        }
-      }
+      applyReaction(res.data);
     } catch (error) {
-      console.log(error);
+      console.error("Error updating dislike:", error);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch (error) {
+      console.error("Error copying share link:", error);
+      toast.error("Could not copy link");
+    }
+  };
+
+  const handleDownload = () => {
+    if (!mediaUrl) return;
+
+    const newWindow = window.open(mediaUrl, "_blank", "noopener,noreferrer");
+    if (!newWindow) {
+      toast.error("Could not open download");
     }
   };
   return (
@@ -122,9 +150,7 @@ const VideoInfo = ({ video }: any) => {
           </Avatar>
           <div>
             <h3 className="font-medium">{video.videochanel}</h3>
-            <p className="text-sm text-gray-600">1.2M subscribers</p>
           </div>
-          <Button className="ml-4">Subscribe</Button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-gray-100 rounded-full">
@@ -171,6 +197,7 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="bg-gray-100 rounded-full"
+            onClick={handleShare}
           >
             <Share className="w-5 h-5 mr-2" />
             Share
@@ -179,6 +206,8 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="bg-gray-100 rounded-full"
+            onClick={handleDownload}
+            disabled={!mediaUrl}
           >
             <Download className="w-5 h-5 mr-2" />
             Download
@@ -198,10 +227,7 @@ const VideoInfo = ({ video }: any) => {
           <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
         </div>
         <div className={`text-sm ${showFullDescription ? "" : "line-clamp-3"}`}>
-          <p>
-            Sample video description. This would contain the actual video
-            description from the database.
-          </p>
+          <p>{video.description || "No description available."}</p>
         </div>
         <Button
           variant="ghost"

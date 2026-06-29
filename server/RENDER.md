@@ -15,13 +15,9 @@ Required environment variables:
 ```text
 DB_URL=<your mongodb atlas uri>
 FRONTEND_URL=https://yourtube-teal.vercel.app
-UPLOAD_DIR=/opt/render/project/src/uploads
-```
-
-Persistent disk:
-
-```text
-Mount Path: /opt/render/project/src/uploads
+CLOUDINARY_CLOUD_NAME=<your cloudinary cloud name>
+CLOUDINARY_API_KEY=<your cloudinary api key>
+CLOUDINARY_API_SECRET=<your cloudinary api secret>
 ```
 
 After Render gives you a backend URL like:

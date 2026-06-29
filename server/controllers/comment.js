@@ -5,8 +5,8 @@ export const postcomment = async (req, res) => {
   const commentdata = req.body;
   const postcomment = new comment(commentdata);
   try {
-    await postcomment.save();
-    return res.status(200).json({ comment: true });
+    const savedComment = await postcomment.save();
+    return res.status(200).json({ comment: savedComment });
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });

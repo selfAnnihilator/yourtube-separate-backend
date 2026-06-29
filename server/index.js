@@ -3,11 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import path from "path";
-import fs from "fs";
 import userroutes from "./routes/auth.js";
 import videoroutes from "./routes/video.js";
 import likeroutes from "./routes/like.js";
+import dislikeroutes from "./routes/dislike.js";
 import watchlaterroutes from "./routes/watchlater.js";
 import historyrroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
@@ -20,10 +19,7 @@ const DB_URL =
   process.env.DB_URL ||
   process.env.MONGO_URI ||
   "mongodb://127.0.0.1:27017/yourtube";
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || "uploads");
 const FRONTEND_URL = process.env.FRONTEND_URL || "";
-
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 app.use(
   cors({
@@ -34,13 +30,11 @@ app.use(
 );
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
-app.use("/uploads", express.static(UPLOAD_DIR));
 app.get("/", (req, res) => {
   res.json({
     message: "Backend is running",
     database:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-    uploadDir: UPLOAD_DIR,
   });
 });
 app.get("/health", (req, res) => {
@@ -55,6 +49,7 @@ app.use(bodyParser.json());
 app.use("/user", userroutes);
 app.use("/video", videoroutes);
 app.use("/like", likeroutes);
+app.use("/dislike", dislikeroutes);
 app.use("/watch", watchlaterroutes);
 app.use("/history", historyrroutes);
 app.use("/comment", commentroutes);

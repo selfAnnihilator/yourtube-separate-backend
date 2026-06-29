@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, X, Clock, Play } from "lucide-react";
+import { MoreVertical, X, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,6 +23,8 @@ export default function WatchLaterContent() {
   useEffect(() => {
     if (user) {
       loadWatchLater();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -46,10 +47,10 @@ export default function WatchLaterContent() {
   }
   const handleRemoveFromWatchLater = async (watchLaterId: string) => {
     try {
-      console.log("Removing from history:", watchLaterId);
+      await axiosInstance.delete(`/watch/${watchLaterId}`);
       setWatchLater(watchLater.filter((item) => item._id !== watchLaterId));
     } catch (error) {
-      console.error("Error removing from history:", error);
+      console.error("Error removing from watch later:", error);
     }
   };
 
@@ -76,15 +77,10 @@ export default function WatchLaterContent() {
       </div>
     );
   }
-  const videos = "/video/vdo.mp4";
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">{watchLater.length} videos</p>
-        <Button className="flex items-center gap-2">
-          <Play className="w-4 h-4" />
-          Play all
-        </Button>
       </div>
 
       <div className="space-y-4">

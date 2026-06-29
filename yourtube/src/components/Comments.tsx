@@ -21,24 +21,6 @@ const Comments = ({ videoId }: any) => {
   const [editText, setEditText] = useState("");
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const fetchedComments = [
-    {
-      _id: "1",
-      videoid: videoId,
-      userid: "1",
-      commentbody: "Great video! Really enjoyed watching this.",
-      usercommented: "John Doe",
-      commentedon: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      _id: "2",
-      videoid: videoId,
-      userid: "2",
-      commentbody: "Thanks for sharing this amazing content!",
-      usercommented: "Jane Smith",
-      commentedon: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ];
   useEffect(() => {
     loadComments();
   }, [videoId]);
@@ -48,7 +30,7 @@ const Comments = ({ videoId }: any) => {
       const res = await axiosInstance.get(`/comment/${videoId}`);
       setComments(res.data);
     } catch (error) {
-      console.log(error);
+      console.error("Error loading comments:", error);
     } finally {
       setLoading(false);
     }
@@ -68,15 +50,7 @@ const Comments = ({ videoId }: any) => {
         usercommented: user.name,
       });
       if (res.data.comment) {
-        const newCommentObj: Comment = {
-          _id: Date.now().toString(),
-          videoid: videoId,
-          userid: user._id,
-          commentbody: newComment,
-          usercommented: user.name || "Anonymous",
-          commentedon: new Date().toISOString(),
-        };
-        setComments([newCommentObj, ...comments]);
+        setComments([res.data.comment, ...comments]);
       }
       setNewComment("");
     } catch (error) {
@@ -108,7 +82,7 @@ const Comments = ({ videoId }: any) => {
         setEditText("");
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error updating comment:", error);
     }
   };
 
@@ -119,7 +93,7 @@ const Comments = ({ videoId }: any) => {
         setComments((prev) => prev.filter((c) => c._id !== id));
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error deleting comment:", error);
     }
   };
   return (
