@@ -5,14 +5,22 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { getMediaUrl } from "@/lib/media";
 
 export default function VideoCard({ video }: any) {
+  const mediaUrl = getMediaUrl(video?.filepath);
+
   return (
     <Link href={`/watch/${video?._id}`} className="group">
       <div className="space-y-3">
         <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-          <video
-            src={getMediaUrl(video?.filepath)}
-            className="object-cover group-hover:scale-105 transition-transform duration-200"
-          />
+          {mediaUrl ? (
+            <video
+              src={mediaUrl}
+              className="object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 text-center px-3">
+              Video unavailable
+            </div>
+          )}
           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">
             10:24
           </div>

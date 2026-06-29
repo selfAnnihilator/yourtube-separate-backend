@@ -88,10 +88,16 @@ export default function WatchLaterContent() {
           <div key={item._id} className="flex gap-4 group">
             <Link href={`/watch/${item.videoid._id}`} className="flex-shrink-0">
               <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
-                <video
-                  src={getMediaUrl(item.videoid?.filepath)}
-                  className="object-cover group-hover:scale-105 transition-transform duration-200"
-                />
+                {getMediaUrl(item.videoid?.filepath) ? (
+                  <video
+                    src={getMediaUrl(item.videoid?.filepath)}
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 text-center px-2">
+                    Unavailable
+                  </div>
+                )}
               </div>
             </Link>
 
