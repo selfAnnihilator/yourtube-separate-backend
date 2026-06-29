@@ -20,7 +20,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
         ref={videoRef}
         className="w-full h-full"
         controls
-        poster={`/placeholder.svg?height=480&width=854`}
       >
         <source src={getMediaUrl(video?.filepath)} type="video/mp4" />
         Your browser does not support the video tag.
