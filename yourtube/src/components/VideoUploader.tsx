@@ -7,7 +7,7 @@ import { Label } from "./ui/label";
 import { Progress } from "./ui/progress";
 import axiosInstance from "@/lib/axiosinstance";
 
-const VideoUploader = ({ channelId, channelName }: any) => {
+const VideoUploader = ({ channelId, channelName, onUploadComplete }: any) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -18,8 +18,8 @@ const VideoUploader = ({ channelId, channelName }: any) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (!file.type.startsWith("video/")) {
-        toast.error("Please upload a valid video file.");
+      if (file.type !== "video/mp4") {
+        toast.error("Please upload an MP4 video file.");
         return;
       }
       if (file.size > 100 * 1024 * 1024) {
@@ -46,7 +46,10 @@ const VideoUploader = ({ channelId, channelName }: any) => {
   const cancelUpload = () => {
     if (isUploading) {
       toast.error("Your video upload has been cancelled");
+      return;
     }
+
+    resetForm();
   };
   const handleUpload = async () => {
     if (!videoFile || !videoTitle.trim()) {
@@ -76,6 +79,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
 
       toast.success("Upload successfully");
       resetForm();
+      onUploadComplete?.();
     } catch (error) {
       console.error("Error uploading video:", error);
       toast.error("There was an error uploading your video. Please try again.");
@@ -101,13 +105,13 @@ const VideoUploader = ({ channelId, channelName }: any) => {
               or click to select files
             </p>
             <p className="text-xs text-gray-400 mt-4">
-              MP4, WebM, MOV or AVI • Up to 100MB
+              MP4 only • Up to 100MB
             </p>
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
-              accept="video/*"
+              accept="video/mp4"
               onChange={handlefilechange}
             />
           </div>

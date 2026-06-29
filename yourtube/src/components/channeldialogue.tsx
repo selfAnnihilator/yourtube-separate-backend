@@ -13,6 +13,7 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
+import { toast } from "sonner";
 
 const Channeldialogue = ({ isopen, onclose, channeldata, mode }: any) => {
   const { user, login } = useUser();
@@ -40,7 +41,7 @@ const Channeldialogue = ({ isopen, onclose, channeldata, mode }: any) => {
         description: "",
       });
     }
-  }, [channeldata]);
+  }, [channeldata, mode, user?.name]);
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -49,21 +50,31 @@ const Channeldialogue = ({ isopen, onclose, channeldata, mode }: any) => {
   };
   const handlesubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!user?._id || !formData.name.trim()) return;
+
+    setisSubmitting(true);
     const payload = {
-      channelname: formData.name,
+      channelname: formData.name.trim(),
       description: formData.description,
     };
-    const response = await axiosInstance.patch(
-      `/user/update/${user._id}`,
-      payload
-    );
-    login(response?.data);
-    router.push(`/channel/${user?._id}`);
-    setFormData({
-      name: "",
-      description: "",
-    });
-    onclose();
+    try {
+      const response = await axiosInstance.patch(
+        `/user/update/${user._id}`,
+        payload
+      );
+      login(response?.data);
+      router.push(`/channel/${user?._id}`);
+      setFormData({
+        name: "",
+        description: "",
+      });
+      onclose();
+    } catch (error) {
+      console.error("Error saving channel:", error);
+      toast.error("Could not save channel. Please try again.");
+    } finally {
+      setisSubmitting(false);
+    }
   };
   return (
     <Dialog open={isopen} onOpenChange={onclose}>
@@ -83,6 +94,7 @@ const Channeldialogue = ({ isopen, onclose, channeldata, mode }: any) => {
               name="name"
               value={formData.name}
               onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
           {/* Channel Description */}
@@ -93,16 +105,22 @@ const Channeldialogue = ({ isopen, onclose, channeldata, mode }: any) => {
               name="description"
               value={formData.description}
               onChange={handleChange}
+              disabled={isSubmitting}
               rows={4}
               placeholder="Tell viewers about your channel..."
             />
           </div>
 
           <DialogFooter className="flex justify-between sm:justify-between">
-            <Button type="button" variant="outline" onClick={onclose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onclose}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !formData.name.trim()}>
               {isSubmitting
                 ? "Saving..."
                 : mode === "create"

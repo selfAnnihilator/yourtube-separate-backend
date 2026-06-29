@@ -16,27 +16,25 @@ const index = () => {
   const channelId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
   const isOwnChannel = Boolean(user && channelId && user._id === channelId);
 
+  const loadVideos = async () => {
+    if (!isOwnChannel) {
+      setVideos([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get("/video/getall");
+      setVideos(res.data.filter((video: any) => video.uploader === channelId));
+    } catch (error) {
+      console.error("Error fetching channel videos:", error);
+      setVideos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadVideos = async () => {
-      if (!isOwnChannel) {
-        setVideos([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const res = await axiosInstance.get("/video/getall");
-        setVideos(
-          res.data.filter((video: any) => video.uploader === channelId)
-        );
-      } catch (error) {
-        console.error("Error fetching channel videos:", error);
-        setVideos([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadVideos();
   }, [channelId, isOwnChannel]);
 
@@ -76,7 +74,11 @@ const index = () => {
         <ChannelHeader channel={user} user={user} />
         <Channeltabs />
         <div className="px-4 pb-8">
-          <VideoUploader channelId={channelId} channelName={user?.channelname} />
+          <VideoUploader
+            channelId={channelId}
+            channelName={user?.channelname}
+            onUploadComplete={loadVideos}
+          />
         </div>
         <div className="px-4 pb-8">
           {loading ? <div>Loading videos...</div> : <ChannelVideos videos={videos} />}
