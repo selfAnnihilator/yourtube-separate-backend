@@ -11,6 +11,7 @@ interface Comment {
   userid: string;
   commentbody: string;
   usercommented: string;
+  authorAvatar?: string;
   commentedon: string;
 }
 const Comments = ({ videoId }: any) => {
@@ -48,6 +49,7 @@ const Comments = ({ videoId }: any) => {
         userid: user._id,
         commentbody: newComment,
         usercommented: user.name,
+        authorAvatar: user.image || "",
       });
       if (res.data.comment) {
         setComments([res.data.comment, ...comments]);
@@ -75,7 +77,9 @@ const Comments = ({ videoId }: any) => {
       if (res.data) {
         setComments((prev) =>
           prev.map((c) =>
-            c._id === editingCommentId ? { ...c, commentbody: editText } : c
+            c._id === editingCommentId
+              ? { ...c, commentbody: res.data.commentbody || editText }
+              : c
           )
         );
         setEditingCommentId(null);
@@ -140,6 +144,7 @@ const Comments = ({ videoId }: any) => {
           comments.map((comment) => (
             <div key={comment._id} className="flex gap-4">
               <Avatar className="w-10 h-10">
+                <AvatarImage src={comment.authorAvatar || ""} />
                 <AvatarFallback>{comment.usercommented?.[0] || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
