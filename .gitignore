@@ -4,3 +4,24 @@ server/uploads/
 yourtube/node_modules/
 yourtube/.next/
 yourtube/.vercel/
+
+# Local agent/editor state
+.agents/
+.codex/
+.cursor/
+.vscode/
+AGENTS.md
+settings/
+settings.json
+*.settings.json
+
+# Local project context for agents
+CONTEXT.md
+context.md
+
+# Browser/test artifacts
+.playwright-mcp/
+playwright-report/
+test-results/
+watch-video-mcp.png
+*.mcp.png
