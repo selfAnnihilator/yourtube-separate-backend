@@ -69,7 +69,7 @@ export function validateCommentText(text) {
 
 export function checkCommentSafety({ originalText, normalizedText, detectedLanguage }) {
   if (
-    detectedLanguage === "en" &&
+    (detectedLanguage === "en" || detectedLanguage === "und") &&
     abusiveWordBlocklist.some((blockedTerm) => {
       const escapedTerm = blockedTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       return new RegExp(`\\b${escapedTerm}\\b`, "i").test(normalizedText);

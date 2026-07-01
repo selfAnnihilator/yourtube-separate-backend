@@ -26,6 +26,31 @@ function getTranslationApiKey() {
   return process.env.TRANSLATION_API_KEY || process.env.DEEPL_API_KEY || "";
 }
 
+function detectCommentLanguageForDeepLTranslation(text) {
+  const detectedLanguage = detectCommentLanguageHeuristic(text);
+
+  if (detectedLanguage.language === ENGLISH_LANGUAGE) {
+    return { language: UNKNOWN_LANGUAGE, confidence: "high" };
+  }
+
+  return detectedLanguage;
+}
+
+export function getCommentTranslationLanguage({ detectedLanguage, languageDetectionConfidence }) {
+  const language = normalizeLanguageCode(detectedLanguage);
+  const confidence = languageDetectionConfidence === "high" ? "high" : "low";
+
+  if (
+    getTranslationProvider() === "deepl" &&
+    process.env.DEEPL_DETECT_LANGUAGE_ENABLED !== "true" &&
+    language === ENGLISH_LANGUAGE
+  ) {
+    return { language: UNKNOWN_LANGUAGE, confidence: "high" };
+  }
+
+  return { language, confidence };
+}
+
 function normalizeLanguageCode(language) {
   const value = String(language || "").trim().toLowerCase();
 
@@ -145,7 +170,7 @@ async function detectLanguageWithLibreTranslate(text, apiUrl) {
 
 async function detectLanguageWithDeepL(text, apiUrl) {
   if (!getTranslationApiKey() || process.env.DEEPL_DETECT_LANGUAGE_ENABLED !== "true") {
-    return detectCommentLanguageHeuristic(text);
+    return detectCommentLanguageForDeepLTranslation(text);
   }
 
   const response = await fetch(`${apiUrl}/v3/detect/language`, {
@@ -155,13 +180,13 @@ async function detectLanguageWithDeepL(text, apiUrl) {
   });
 
   if (!response.ok) {
-    return detectCommentLanguageHeuristic(text);
+    return detectCommentLanguageForDeepLTranslation(text);
   }
 
   const detectedLanguage = parseDeepLDetectResponse(await response.json());
 
   if (detectedLanguage.confidence === "low") {
-    return detectCommentLanguageHeuristic(text);
+    return detectCommentLanguageForDeepLTranslation(text);
   }
 
   return detectedLanguage;
@@ -181,6 +206,10 @@ export async function detectCommentLanguage(text) {
 
     return await detectLanguageWithLibreTranslate(text, apiUrl);
   } catch (error) {
+    if (getTranslationProvider() === "deepl") {
+      return detectCommentLanguageForDeepLTranslation(text);
+    }
+
     return detectCommentLanguageHeuristic(text);
   }
 }

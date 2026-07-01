@@ -7,6 +7,7 @@ import {
 } from "../utils/commentSafety.js";
 import {
   detectCommentLanguage,
+  getCommentTranslationLanguage,
   translateCommentToEnglish,
 } from "../utils/commentTranslation.js";
 
@@ -15,6 +16,10 @@ function serializeComment(commentDoc) {
   const originalText = value.originalText || value.commentbody || "";
   const authorName = value.authorName || value.usercommented || "";
   const postedAt = value.commentedon || value.createdAt;
+  const translationLanguage = getCommentTranslationLanguage({
+    detectedLanguage: value.detectedLanguage || "und",
+    languageDetectionConfidence: value.languageDetectionConfidence || "low",
+  });
 
   return {
     _id: value._id,
@@ -26,8 +31,8 @@ function serializeComment(commentDoc) {
     authorName,
     authorAvatar: value.authorAvatar || "",
     commentedon: postedAt,
-    detectedLanguage: value.detectedLanguage || "und",
-    languageDetectionConfidence: value.languageDetectionConfidence || "low",
+    detectedLanguage: translationLanguage.language,
+    languageDetectionConfidence: translationLanguage.confidence,
     hasEnglishTranslation: Boolean(value.englishTranslation),
     Like: value.Like || 0,
     Dislike: value.Dislike || 0,
@@ -213,8 +218,12 @@ export const translatecomment = async (req, res) => {
     }
 
     const originalText = existingComment.originalText || existingComment.commentbody || "";
-    const detectedLanguage = existingComment.detectedLanguage || "und";
-    const confidence = existingComment.languageDetectionConfidence || "low";
+    const translationLanguage = getCommentTranslationLanguage({
+      detectedLanguage: existingComment.detectedLanguage || "und",
+      languageDetectionConfidence: existingComment.languageDetectionConfidence || "low",
+    });
+    const detectedLanguage = translationLanguage.language;
+    const confidence = translationLanguage.confidence;
 
     if (detectedLanguage === "en") {
       return res.status(400).json({
