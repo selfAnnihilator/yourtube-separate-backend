@@ -39,6 +39,10 @@ FRONTEND_URL=http://localhost:3000
 CLOUDINARY_CLOUD_NAME=<cloudinary cloud name>
 CLOUDINARY_API_KEY=<cloudinary api key>
 CLOUDINARY_API_SECRET=<cloudinary api secret>
+TRANSLATION_PROVIDER=deepl
+DEEPL_API_KEY=<deepl api key>
+TRANSLATION_API_URL=https://api-free.deepl.com
+DEEPL_DETECT_LANGUAGE_ENABLED=false
 ```
 
 Health check:
@@ -85,7 +89,13 @@ FRONTEND_URL=https://yourtube-teal.vercel.app
 CLOUDINARY_CLOUD_NAME=<cloudinary cloud name>
 CLOUDINARY_API_KEY=<cloudinary api key>
 CLOUDINARY_API_SECRET=<cloudinary api secret>
+TRANSLATION_PROVIDER=deepl
+DEEPL_API_KEY=<deepl api key>
+TRANSLATION_API_URL=https://api-free.deepl.com
+DEEPL_DETECT_LANGUAGE_ENABLED=false
 ```
+
+`DEEPL_DETECT_LANGUAGE_ENABLED` should stay `false` unless your DeepL account has access to the beta Detect Language API. Translation still works without it because DeepL can auto-detect the source language during `/v2/translate`.
 
 See [server/RENDER.md](server/RENDER.md) and [docs/adr/0001-use-cloudinary-for-video-assets.md](docs/adr/0001-use-cloudinary-for-video-assets.md).
 

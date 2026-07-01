@@ -32,199 +32,200 @@ Improve comments so users can post in any language, translate non-English commen
 
 Update `server/Modals/comment.js`:
 
-- Replace or supplement `commentbody` with fields for:
-  - original text
-  - normalized text for safety checks
-  - detected language code
-  - language detection confidence or certainty marker
-  - optional cached English translation
-  - author display name snapshot
-  - author avatar snapshot
-  - posted time
-  - like count
-  - dislike count
-  - moderation state, default visible
-  - flagged-for-review marker
+- [x] Replace or supplement `commentbody` with fields for:
+  - [x] original text
+  - [x] normalized text for safety checks
+  - [x] detected language code
+  - [x] language detection confidence or certainty marker
+  - [x] optional cached English translation
+  - [x] author display name snapshot
+  - [x] author avatar snapshot
+  - [x] posted time
+  - [x] like count
+  - [x] dislike count
+  - [x] moderation state, default visible
+  - [x] flagged-for-review marker
 
-Keep compatibility with existing comments during migration by reading old `commentbody` as Original Comment Text until data is migrated.
+- [x] Keep compatibility with existing comments during migration by reading old `commentbody` as Original Comment Text until data is migrated.
 
 ## Phase 2: Backend moderation and validation
 
 Create a comment safety module that runs before create/edit:
 
-- trim harmless leading/trailing whitespace
-- reject empty or whitespace-only text as validation error
-- reject over-length text as validation error
-- normalize text for checks
-- reject English abusive words from project-owned blocklist
-- reject Recent Duplicate Comment by same author on same video
-- reject Spam-Like Comment patterns
-- reject Punctuation-Flood Comment patterns
+- [x] trim harmless leading/trailing whitespace
+- [x] reject empty or whitespace-only text as validation error
+- [x] reject over-length text as validation error
+- [x] normalize text for checks
+- [x] reject English abusive words from project-owned blocklist
+- [x] reject Recent Duplicate Comment by same author on same video
+- [x] reject Spam-Like Comment patterns
+- [x] reject Punctuation-Flood Comment patterns
 
 Return broad block reasons only:
 
-- abusive language
-- spam-like comment
-- repeated punctuation
+- [x] abusive language
+- [x] spam-like comment
+- [x] repeated punctuation
 
-Do not reveal exact words or thresholds.
+- [x] Do not reveal exact words or thresholds.
 
 ## Phase 3: Language detection and English translation
 
 Add language detection on create/edit:
 
-- store ISO language code for every comment, including `en`
-- hide translation option for English comments
-- hide translation option when language detection is uncertain
-- clear cached English translation when Original Comment Text changes
+- [x] store ISO language code for every comment, including `en`
+- [x] hide translation option for English comments
+- [x] hide translation option when language detection is uncertain
+- [x] clear cached English translation when Original Comment Text changes
 
 Add translation endpoint:
 
-- `POST /comment/:id/translate`
-- allowed for signed-in and signed-out viewers
-- only works for non-English comments
-- creates cached English translation on first request
-- returns cached translation afterward
-- on failure, preserve original text and return an error
+- [x] `POST /comment/:id/translate`
+- [x] allowed for signed-in and signed-out viewers
+- [x] only works for non-English comments
+- [x] creates cached English translation on first request
+- [x] returns cached translation afterward
+- [x] on failure, preserve original text and return an error
 
-Provider choice is intentionally not locked in yet.
+- [x] Provider choice is intentionally not locked in yet. Implemented behind environment variables with DeepL support and LibreTranslate compatibility.
 
 ## Phase 4: Comment reaction model
 
 Add a comment reaction collection:
 
-- `viewer`
-- `commentid`
-- reaction type: like or dislike
-- timestamps
+- [ ] `viewer`
+- [ ] `commentid`
+- [ ] reaction type: like or dislike
+- [ ] timestamps
 
 Add endpoints:
 
-- `POST /comment/:id/reaction`
-- toggles selected reaction off if clicked again
-- switches like to dislike or dislike to like
-- rejects author reacting to own comment
+- [ ] `POST /comment/:id/reaction`
+- [ ] toggles selected reaction off if clicked again
+- [ ] switches like to dislike or dislike to like
+- [ ] rejects author reacting to own comment
 
-Keep aggregate like/dislike counts on the comment for fast reads.
+- [x] Keep aggregate like/dislike counts on the comment for fast reads.
 
 ## Phase 5: Comment report model
 
 Add a comment report collection:
 
-- `viewer`
-- `commentid`
-- reason
-- timestamps
+- [ ] `viewer`
+- [ ] `commentid`
+- [ ] reason
+- [ ] timestamps
 
 Report reasons:
 
-- abusive language
-- spam
-- harassment
-- misleading content
-- other
+- [ ] abusive language
+- [ ] spam
+- [ ] harassment
+- [ ] misleading content
+- [ ] other
 
 Add endpoint:
 
-- `POST /comment/:id/report`
-- requires sign-in
-- rejects author reporting own comment
-- enforces one report per user per comment
-- sets comment moderation state to Flagged for Review
-- does not hide or delete the comment
+- [ ] `POST /comment/:id/report`
+- [ ] requires sign-in
+- [ ] rejects author reporting own comment
+- [ ] enforces one report per user per comment
+- [ ] sets comment moderation state to Flagged for Review
+- [ ] does not hide or delete the comment
 
-Do not expose report counts in public APIs.
+- [x] Do not expose report counts in public APIs.
 
 ## Phase 6: Batched comment read API
 
 Replace or extend `GET /comment/:videoid` so it returns comments for a video with:
 
-- comment id
-- Original Comment Text
-- author display snapshot
-- posted relative timestamp source
-- detected language flag sufficient to decide Translate visibility
-- like/dislike counts
-- `currentUserReaction`
-- `reportedByCurrentUser`
+- [x] comment id
+- [x] Original Comment Text
+- [x] author display snapshot
+- [x] posted relative timestamp source
+- [x] detected language flag sufficient to decide Translate visibility
+- [x] like/dislike counts
+- [ ] `currentUserReaction`
+- [ ] `reportedByCurrentUser`
 
-Accept optional user context for signed-in viewers. Avoid one request per comment.
+- [ ] Accept optional user context for signed-in viewers.
+- [x] Avoid one request per comment.
 
-Sort comments newest first.
+- [x] Sort comments newest first.
 
 ## Phase 7: Frontend comment UI
 
 Update `yourtube/src/components/Comments.tsx`:
 
-- render username, avatar/fallback initial, and posted time
-- preserve line breaks in plain text
-- show Translate to English only for non-English comments
-- replace visible text with translation after click
-- change button to Show original while translated
-- do not show report/reaction controls for signed-out viewers, except public counts
-- hide reaction/report controls on the author's own comments
-- show Edit/Delete for own comments
-- show Reported after current user reports a comment
-- show broad block/validation errors when create/edit fails
+- [x] render username, avatar/fallback initial, and posted time
+- [x] preserve line breaks in plain text
+- [x] show Translate to English only for non-English comments
+- [x] replace visible text with translation after click
+- [x] change button to Show original while translated
+- [x] do not show report/reaction controls for signed-out viewers, except public counts
+- [x] hide reaction/report controls on the author's own comments
+- [x] show Edit/Delete for own comments
+- [ ] show Reported after current user reports a comment
+- [ ] show broad block/validation errors when create/edit fails
 
-Keep comments plain text. Do not add Markdown or HTML rendering.
+- [x] Keep comments plain text. Do not add Markdown or HTML rendering.
 
 ## Phase 8: Delete/edit behavior
 
 On edit:
 
-- run the same validation and safety checks as create
-- if rejected, keep existing comment unchanged
-- update Original Comment Text
-- recalculate Detected Comment Language
-- clear cached English translation
-- preserve reactions and reports
-- preserve Flagged for Review state
+- [x] run the same validation and safety checks as create
+- [x] if rejected, keep existing comment unchanged
+- [x] update Original Comment Text
+- [x] recalculate Detected Comment Language
+- [x] clear cached English translation
+- [x] preserve reactions and reports
+- [x] preserve Flagged for Review state
 
 On delete:
 
-- hard-delete the comment
-- delete related comment reactions
-- delete related comment reports
+- [x] hard-delete the comment
+- [ ] delete related comment reactions
+- [ ] delete related comment reports
 
 ## Phase 9: Verification
 
 Backend:
 
-- `node --check` for changed backend files
-- create comment accepts normal English text
-- create comment accepts non-English text and stores detected language
-- create comment blocks abusive English blocklist terms
-- create comment blocks duplicate same-author same-video recent text
-- create comment blocks punctuation flood
-- create comment allows emoji-heavy comments and emoticons
-- edit applies safety checks and preserves old text on failure
-- report sets Flagged for Review without hiding comment
-- dislike does not flag or hide comment
-- own comment reaction/report is rejected
-- duplicate report is rejected
-- delete removes reactions and reports
+- [x] `node --check` for changed backend files
+- [ ] create comment accepts normal English text
+- [ ] create comment accepts non-English text and stores detected language
+- [ ] create comment blocks abusive English blocklist terms
+- [ ] create comment blocks duplicate same-author same-video recent text
+- [ ] create comment blocks punctuation flood
+- [ ] create comment allows emoji-heavy comments and emoticons
+- [ ] edit applies safety checks and preserves old text on failure
+- [ ] report sets Flagged for Review without hiding comment
+- [ ] dislike does not flag or hide comment
+- [ ] own comment reaction/report is rejected
+- [ ] duplicate report is rejected
+- [ ] delete removes reactions and reports
 
 Frontend:
 
-- `npm run build`
-- signed-out viewer can read and translate non-English comments
-- signed-out viewer cannot react/report/post
-- signed-in viewer can post, edit, delete own comment
-- signed-in viewer can like/dislike/report other comments
-- reaction toggle updates counts
-- report button changes to Reported
-- English comments show no translation option
-- translation failure leaves original text visible
+- [x] `npm run build`
+- [ ] signed-out viewer can read and translate non-English comments
+- [x] signed-out viewer cannot react/report/post
+- [ ] signed-in viewer can post, edit, delete own comment
+- [ ] signed-in viewer can like/dislike/report other comments
+- [ ] reaction toggle updates counts
+- [ ] report button changes to Reported
+- [x] English comments show no translation option
+- [x] translation failure leaves original text visible
 
 Production smoke:
 
-- `/health`
-- `/video/getall`
-- watch page with comments
-- comment translation endpoint
-- comment reaction endpoint
-- comment report endpoint
+- [ ] `/health`
+- [ ] `/video/getall`
+- [ ] watch page with comments
+- [ ] comment translation endpoint
+- [ ] comment reaction endpoint
+- [ ] comment report endpoint
 
 ## Out of scope
 

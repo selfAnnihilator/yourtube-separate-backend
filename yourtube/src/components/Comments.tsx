@@ -10,9 +10,13 @@ interface Comment {
   videoid: string;
   userid: string;
   commentbody: string;
+  originalText?: string;
   usercommented: string;
   authorAvatar?: string;
   commentedon: string;
+  detectedLanguage?: string;
+  languageDetectionConfidence?: "high" | "low";
+  hasEnglishTranslation?: boolean;
 }
 const Comments = ({ videoId }: any) => {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -20,6 +24,9 @@ const Comments = ({ videoId }: any) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [translatedComments, setTranslatedComments] = useState<Record<string, string>>({});
+  const [translatingCommentId, setTranslatingCommentId] = useState<string | null>(null);
+  const [translationErrors, setTranslationErrors] = useState<Record<string, string>>({});
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -64,24 +71,36 @@ const Comments = ({ videoId }: any) => {
 
   const handleEdit = (comment: Comment) => {
     setEditingCommentId(comment._id);
-    setEditText(comment.commentbody);
+    setEditText(comment.originalText || comment.commentbody);
   };
 
   const handleUpdateComment = async () => {
-    if (!editText.trim()) return;
+    if (!editingCommentId || !editText.trim()) return;
+    const commentId = editingCommentId;
+
     try {
       const res = await axiosInstance.post(
-        `/comment/editcomment/${editingCommentId}`,
+        `/comment/editcomment/${commentId}`,
         { commentbody: editText }
       );
       if (res.data) {
         setComments((prev) =>
           prev.map((c) =>
-            c._id === editingCommentId
-              ? { ...c, commentbody: res.data.commentbody || editText }
+            c._id === commentId
+              ? { ...c, ...res.data, commentbody: res.data.commentbody || editText }
               : c
           )
         );
+        setTranslatedComments((prev) => {
+          const next = { ...prev };
+          delete next[commentId];
+          return next;
+        });
+        setTranslationErrors((prev) => {
+          const next = { ...prev };
+          delete next[commentId];
+          return next;
+        });
         setEditingCommentId(null);
         setEditText("");
       }
@@ -100,6 +119,55 @@ const Comments = ({ videoId }: any) => {
       console.error("Error deleting comment:", error);
     }
   };
+
+  const canTranslateComment = (comment: Comment) =>
+    comment.detectedLanguage &&
+    comment.detectedLanguage !== "en" &&
+    comment.languageDetectionConfidence === "high";
+
+  const getErrorMessage = (error: any) =>
+    error?.response?.data?.message || "Could not translate this comment right now.";
+
+  const handleTranslate = async (comment: Comment) => {
+    if (translatedComments[comment._id]) {
+      setTranslatedComments((prev) => {
+        const next = { ...prev };
+        delete next[comment._id];
+        return next;
+      });
+      return;
+    }
+
+    setTranslatingCommentId(comment._id);
+    setTranslationErrors((prev) => {
+      const next = { ...prev };
+      delete next[comment._id];
+      return next;
+    });
+
+    try {
+      const res = await axiosInstance.post(`/comment/${comment._id}/translate`);
+      setTranslatedComments((prev) => ({
+        ...prev,
+        [comment._id]: res.data.englishTranslation,
+      }));
+      setComments((prev) =>
+        prev.map((currentComment) =>
+          currentComment._id === comment._id
+            ? { ...currentComment, hasEnglishTranslation: true }
+            : currentComment
+        )
+      );
+    } catch (error) {
+      setTranslationErrors((prev) => ({
+        ...prev,
+        [comment._id]: getErrorMessage(error),
+      }));
+    } finally {
+      setTranslatingCommentId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
@@ -183,7 +251,31 @@ const Comments = ({ videoId }: any) => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm">{comment.commentbody}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {translatedComments[comment._id] ||
+                        comment.originalText ||
+                        comment.commentbody}
+                    </p>
+                    {canTranslateComment(comment) && (
+                      <div className="mt-2">
+                        <button
+                          className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                          onClick={() => handleTranslate(comment)}
+                          disabled={translatingCommentId === comment._id}
+                        >
+                          {translatedComments[comment._id]
+                            ? "Show original"
+                            : translatingCommentId === comment._id
+                              ? "Translating..."
+                              : "Translate to English"}
+                        </button>
+                      </div>
+                    )}
+                    {translationErrors[comment._id] && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {translationErrors[comment._id]}
+                      </p>
+                    )}
                     {comment.userid === user?._id && (
                       <div className="flex gap-2 mt-2 text-sm text-gray-500">
                         <button onClick={() => handleEdit(comment)}>

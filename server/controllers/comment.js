@@ -3,9 +3,12 @@ import mongoose from "mongoose";
 import {
   RECENT_DUPLICATE_WINDOW_MS,
   checkCommentSafety,
-  detectCommentLanguage,
   validateCommentText,
 } from "../utils/commentSafety.js";
+import {
+  detectCommentLanguage,
+  translateCommentToEnglish,
+} from "../utils/commentTranslation.js";
 
 function serializeComment(commentDoc) {
   const value = commentDoc.toObject ? commentDoc.toObject() : commentDoc;
@@ -14,16 +17,22 @@ function serializeComment(commentDoc) {
   const postedAt = value.commentedon || value.createdAt;
 
   return {
-    ...value,
+    _id: value._id,
+    userid: value.userid,
+    videoid: value.videoid,
     commentbody: originalText,
     originalText,
     usercommented: authorName,
     authorName,
+    authorAvatar: value.authorAvatar || "",
     commentedon: postedAt,
+    detectedLanguage: value.detectedLanguage || "und",
+    languageDetectionConfidence: value.languageDetectionConfidence || "low",
+    hasEnglishTranslation: Boolean(value.englishTranslation),
     Like: value.Like || 0,
     Dislike: value.Dislike || 0,
-    moderationState: value.moderationState || "visible",
-    flaggedForReview: Boolean(value.flaggedForReview),
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
   };
 }
 
@@ -49,7 +58,7 @@ async function buildCommentTextFields(rawText, { userId, videoId, excludeId }) {
     return validation;
   }
 
-  const detectedLanguage = detectCommentLanguage(validation.originalText);
+  const detectedLanguage = await detectCommentLanguage(validation.originalText);
   const safety = checkCommentSafety({
     originalText: validation.originalText,
     normalizedText: validation.normalizedText,
@@ -184,6 +193,69 @@ export const editcomment = async (req, res) => {
       { new: true }
     );
     return res.status(200).json(serializeComment(updatecomment));
+  } catch (error) {
+    console.error(" error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const translatecomment = async (req, res) => {
+  const { id: _id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(404).json({ message: "comment unavailable" });
+  }
+
+  try {
+    const existingComment = await comment.findById(_id);
+    if (!existingComment) {
+      return res.status(404).json({ message: "comment unavailable" });
+    }
+
+    const originalText = existingComment.originalText || existingComment.commentbody || "";
+    const detectedLanguage = existingComment.detectedLanguage || "und";
+    const confidence = existingComment.languageDetectionConfidence || "low";
+
+    if (detectedLanguage === "en") {
+      return res.status(400).json({
+        code: "COMMENT_ALREADY_ENGLISH",
+        message: "This comment is already in English.",
+      });
+    }
+
+    if (confidence !== "high") {
+      return res.status(400).json({
+        code: "COMMENT_LANGUAGE_UNCERTAIN",
+        message: "This comment's language could not be detected confidently.",
+      });
+    }
+
+    if (existingComment.englishTranslation) {
+      return res.status(200).json({
+        englishTranslation: existingComment.englishTranslation,
+        translatedAt: existingComment.translatedAt,
+        cached: true,
+      });
+    }
+
+    const translation = await translateCommentToEnglish({
+      text: originalText,
+      sourceLanguage: detectedLanguage,
+    });
+
+    if (!translation.ok) {
+      return res.status(translation.status).json(translation.body);
+    }
+
+    existingComment.englishTranslation = translation.translatedText;
+    existingComment.translatedAt = new Date();
+    await existingComment.save();
+
+    return res.status(200).json({
+      englishTranslation: existingComment.englishTranslation,
+      translatedAt: existingComment.translatedAt,
+      cached: false,
+    });
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });
